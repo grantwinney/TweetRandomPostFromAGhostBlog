@@ -15,6 +15,8 @@ I wanted to try my hand at writing my own app to run in AWS Lambda, and I wanted
 
 So here it is, a C# console app you can run in AWS Lambda. Schedule it to run as often as you like - I'm thinking maybe once a day.
 
+If you'd like to read more about it, [I wrote a blog post about it too](https://grantwinney.com/using-aws-lambda-and-tweetinvi-to-tweet-a-random-ghost-blog-post/).
+
 ### Getting the code
 
 1. Clone the repo: `git clone git@github.com:grantwinney/TweetRandomFeedItem.git`
