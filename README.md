@@ -1,6 +1,6 @@
 # Tweet a Random Feed Item
 
-***Using Ghost, AWS Lambda, and Tweetinvi***
+***Using [Ghost](https://ghost.org/), [AWS Lambda](https://aws.amazon.com/lambda/), and [Tweetinvi](https://github.com/linvi/tweetinvi)***
 
 My first experience with AWS Lambda was [using Ephemeral to clean up my Twitter feed](https://grantwinney.com/my-first-experience-with-aws-lambda/), which I lightly modified to delete "likes" as well as tweets.
 
@@ -31,7 +31,7 @@ Now you need to create a new AWS Lambda job. Check out the first article linked 
 2. The name of the function, and the role it makes you create, don't matter.
 3. Upload the zip file you created above.
 4. Set the handler as `TweetRandomFeedItem::TweetRandomFeedItem.Program::Main`
-5. Under "Basic settings", decrease the Memory to 128MB and increase the timeout to a minute. For me, it generally takes about 15-20 seconds to run, and uses 50MB or less.
+5. Under "Basic settings", decrease the memory to 128MB and increase the timeout to a minute. For me, it generally takes about 15-20 seconds to run, and uses 50MB or less of memory.
 6. Set the following environment variables:
 
 #### Environment Variables
