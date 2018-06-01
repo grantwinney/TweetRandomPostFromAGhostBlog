@@ -31,7 +31,7 @@ Now you need to create a new AWS Lambda job. Check out the first article linked 
 2. The name of the function, and the role it makes you create, don't matter.
 3. Upload the zip file you created above.
 4. Set the handler as `TweetRandomFeedItem::TweetRandomFeedItem.Program::Main`
-5. Adjust the timeout from 15 seconds to a minute. For me, it took about 15-20 seconds to run.
+5. Under "Basic settings", decrease the Memory to 128MB and increase the timeout to a minute. For me, it generally takes about 15-20 seconds to run, and uses 50MB or less.
 6. Set the following environment variables:
 
 #### Environment Variables
