@@ -36,6 +36,10 @@ Now you need to create a new AWS Lambda job. Check out the first article linked 
 
 #### Environment Variables
 
+I make heavy use of environment variables, so credentials and other settings can easily be changed between runs, without having to recompile the code and upload it again.
+
+---
+
 `GHOST_CLIENT_ID`, `GHOST_CLIENT_SECRET`
 
 ***required***
