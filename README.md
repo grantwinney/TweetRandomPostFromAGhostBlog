@@ -1,4 +1,4 @@
-# Tweet a Random Feed Item
+# Tweet a Random Post from a Ghost Blog
 
 ***Using [Ghost](https://ghost.org/), [AWS Lambda](https://aws.amazon.com/lambda/), and [Tweetinvi](https://github.com/linvi/tweetinvi)***
 
