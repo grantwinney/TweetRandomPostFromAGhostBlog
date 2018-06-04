@@ -1,4 +1,4 @@
-# Tweet a Random Feed Item
+# Tweet a Random Post from a Ghost Blog
 
 ***Using [Ghost](https://ghost.org/), [AWS Lambda](https://aws.amazon.com/lambda/), and [Tweetinvi](https://github.com/linvi/tweetinvi)***
 
@@ -19,7 +19,7 @@ If you'd like to read more about it, [I wrote a blog post about it too](https://
 
 ### Getting the code
 
-1. Clone the repo: `git clone git@github.com:grantwinney/TweetRandomFeedItem.git`
+1. Clone the repo: `git clone git@github.com:grantwinney/TweetRandomFeedItemForGhost.git`
 2. Open the project in Visual Studio.
 3. Build the project _(you may have to right-click the NuGet folder and choose 'restore' to download the dependencies, although VS usually takes care of that for you)_
 4. Find the `bin` directory on disk, and drill down until you get to the assemblies (dll files). Most likely: `bin/Debug/netcoreapp2.0`
