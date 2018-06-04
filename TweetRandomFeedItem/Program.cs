@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using RestSharp;
@@ -14,6 +15,7 @@ namespace TweetRandomFeedItem
         const int TWITTER_URL_SIZE = 23;
         const int MAX_TWEET_LENGTH = 280;
         static string accessToken;
+        static Regex pattern = new Regex("[- ]");
 
         static Random rnd = new Random();
 
@@ -23,13 +25,14 @@ namespace TweetRandomFeedItem
 
             SendTweet(message);
 
-            Console.WriteLine($"Tweeted message:\r\n\r\n{message}");
+            Console.WriteLine($"Tweeted message:\r\n{message}\r\n");
         }
 
         static string GetRandomPostId()
         {
             var ghostUri = Helper.GetEnv("GHOST_URI");
             var postLimit = Helper.GetEnv("GHOST_POST_RETRIEVAL_LIMIT", DEFAULT_POST_RETRIEVAL_LIMIT);
+            var factorInAge = Convert.ToBoolean(Helper.GetEnv("FACTOR_IN_AGE_OF_POST"));
           
             var client = new RestClient { BaseUrl = new Uri($"{ghostUri}{API_URL}") };
 
@@ -37,11 +40,34 @@ namespace TweetRandomFeedItem
             AttachAuthToRequest(requestAllPostIds);
 
             requestAllPostIds.AddQueryParameter("limit", postLimit);
-            requestAllPostIds.AddQueryParameter("fields", "id");
+            requestAllPostIds.AddQueryParameter("fields", factorInAge ? "id,published_at" : "id");
 
             var posts = client.Execute<PostResponse>(requestAllPostIds).Data.Posts;
-           
-            return posts[rnd.Next(0, posts.Count - 1)].Id;
+
+            return factorInAge
+                    ? GetRandomPostIdWeightedOnAge(posts)
+                    : posts[rnd.Next(0, posts.Count)].Id;
+        }
+
+        static string GetRandomPostIdWeightedOnAge(List<Post> posts)
+        {
+            var earliestPublishDate = DateTime.Parse(posts.Last().PublishedAt);
+
+            var postIdsAndPubWeights = posts.Select(p => Tuple.Create(p.Id, (DateTime.Parse(p.PublishedAt) - earliestPublishDate).Days));
+
+            var totalPubWeights = postIdsAndPubWeights.Sum(p => p.Item2);
+
+            var randomPubWeight = rnd.Next(0, totalPubWeights);
+
+            foreach (var p in postIdsAndPubWeights)
+            {
+                if (randomPubWeight <= p.Item2)
+                    return p.Item1;
+
+                randomPubWeight -= p.Item2;
+            }
+
+            return null;  // req to compile, but won't happen unless there are no posts
         }
 
         static Post GetPost(string postId)
@@ -65,8 +91,7 @@ namespace TweetRandomFeedItem
 
             var remainingSpaceForTags = MAX_TWEET_LENGTH - (post.Title.Length + 1 + TWITTER_URL_SIZE);
 
-            var pattern = new Regex("[- ]");
-            var tags = post.Tags.Take(maxTagCount).Select(t => $"#{pattern.Replace(t.Name, "").Replace("#", "sharp").Replace(".", "dot")}");
+            var tags = post.Tags.Take(maxTagCount).Select(t => CleanTagName(t.Name));
           
             var tagsFlat = "";
             foreach (var t in tags)
@@ -78,6 +103,11 @@ namespace TweetRandomFeedItem
             }
 
             return $"{post.Title}{tagsFlat}\r\n{ghostUri}{post.Url}";
+        }
+
+        static string CleanTagName(string tag)
+        {
+            return $"#{pattern.Replace(tag, "").Replace("#", "sharp").Replace(".", "dot")}";
         }
 
         static void SendTweet(string message)

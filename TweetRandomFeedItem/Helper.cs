@@ -1,4 +1,5 @@
 ﻿using System;
+
 namespace TweetRandomFeedItem
 {
     public class Helper
@@ -7,7 +8,6 @@ namespace TweetRandomFeedItem
         {
             return Environment.GetEnvironmentVariable(environmentVariable);
         }
-
 
         public static string GetEnv(string environmentVariable, string defaultValue)
         {
