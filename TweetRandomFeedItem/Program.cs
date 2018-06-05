@@ -53,12 +53,13 @@ namespace TweetRandomFeedItem
         {
             var earliestPublishDate = DateTime.Parse(posts.Last().PublishedAt);
 
-            var postIdsAndPubWeights = posts.Select(p => Tuple.Create(p.Id, (DateTime.Parse(p.PublishedAt) - earliestPublishDate).Days));
+            var postsCount = posts.Count;
+            var postIdsAndPubWeights = posts.Select((p, i) => Tuple.Create(posts[i].Id, (DateTime.Parse(posts[i].PublishedAt) - earliestPublishDate).Days * (postsCount - i)));
 
             var totalPubWeights = postIdsAndPubWeights.Sum(p => p.Item2);
 
             var randomPubWeight = rnd.Next(0, totalPubWeights);
-
+           
             foreach (var p in postIdsAndPubWeights)
             {
                 if (randomPubWeight <= p.Item2)
