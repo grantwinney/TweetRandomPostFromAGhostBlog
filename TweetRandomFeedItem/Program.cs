@@ -90,7 +90,8 @@ namespace TweetRandomFeedItem
             var ghostUri = Helper.GetEnv("GHOST_URI");
             var maxTagCount = Convert.ToInt32(Helper.GetEnv("TWITTER_MAX_TAG_COUNT", DEFAULT_MAX_TAG_COUNT));
 
-            var remainingSpaceForTags = MAX_TWEET_LENGTH - (post.Title.Length + 1 + TWITTER_URL_SIZE);
+            var caption = post.TwitterDescription ?? post.MetaDescription ?? post.Title;
+            var remainingSpaceForTags = MAX_TWEET_LENGTH - (caption.Length + 1 + TWITTER_URL_SIZE);
 
             var tags = post.Tags.Take(maxTagCount).Select(t => CleanTagName(t.Name));
           
@@ -103,7 +104,7 @@ namespace TweetRandomFeedItem
                 tagsFlat += $" {t}";
             }
 
-            return $"{post.Title}{tagsFlat}\r\n{ghostUri}{post.Url}";
+            return $"{caption}{tagsFlat}\r\n{ghostUri}{post.Url}";
         }
 
         static string CleanTagName(string tag)
