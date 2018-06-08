@@ -90,7 +90,10 @@ namespace TweetRandomFeedItem
             var ghostUri = Helper.GetEnv("GHOST_URI");
             var maxTagCount = Convert.ToInt32(Helper.GetEnv("TWITTER_MAX_TAG_COUNT", DEFAULT_MAX_TAG_COUNT));
 
-            var caption = post.TwitterDescription ?? post.MetaDescription ?? post.Title;
+            var captionSources = new List<string> { post.TwitterDescription, post.MetaDescription, post.Title };
+
+            var caption = captionSources.First(cs => !String.IsNullOrWhiteSpace(cs));
+
             var remainingSpaceForTags = MAX_TWEET_LENGTH - (caption.Length + 1 + TWITTER_URL_SIZE);
 
             var tags = post.Tags.Take(maxTagCount).Select(t => CleanTagName(t.Name));
