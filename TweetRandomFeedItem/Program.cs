@@ -62,7 +62,7 @@ namespace TweetRandomFeedItem
 
                 var randomPost = GetPost(randomPostId);
 
-                if (randomPost.Tags.Select(tag => tag.Slug).Intersect(tagsToTweet).Any())
+                if (!tagsToTweet.Any() || randomPost.Tags.Select(tag => tag.Slug).Intersect(tagsToTweet).Any())
                     return randomPost;
             }
         }
