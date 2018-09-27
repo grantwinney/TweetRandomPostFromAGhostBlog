@@ -21,19 +21,15 @@ namespace TweetRandomFeedItem
 
         public static void Main()
         {
-            var message = CreateMessage(GetPost(GetRandomPostId()));
-
-            SendTweet(message);
-
-            Console.WriteLine($"Tweeted message:\r\n{message}\r\n");
+            SendTweet(CreateMessage(PickRandomPost(GetAllPosts())));
         }
 
-        static string GetRandomPostId()
+        static List<Post> GetAllPosts()
         {
             var ghostUri = Helper.GetEnv("GHOST_URI");
             var postLimit = Helper.GetEnv("GHOST_POST_RETRIEVAL_LIMIT", DEFAULT_POST_RETRIEVAL_LIMIT);
             var factorInAge = Convert.ToBoolean(Helper.GetEnv("FACTOR_IN_AGE_OF_POST"));
-          
+
             var client = new RestClient { BaseUrl = new Uri($"{ghostUri}{API_URL}") };
 
             var requestAllPostIds = new RestRequest("posts", Method.GET);
@@ -42,11 +38,33 @@ namespace TweetRandomFeedItem
             requestAllPostIds.AddQueryParameter("limit", postLimit);
             requestAllPostIds.AddQueryParameter("fields", factorInAge ? "id,published_at" : "id");
 
-            var posts = client.Execute<PostResponse>(requestAllPostIds).Data.Posts;
+            return client.Execute<PostResponse>(requestAllPostIds).Data.Posts;
+        }
 
-            return factorInAge
-                    ? GetRandomPostIdWeightedOnAge(posts)
-                    : posts[rnd.Next(0, posts.Count)].Id;
+        static Post PickRandomPost(List<Post> allPosts)
+        {
+            var selectedIds = new HashSet<string>();
+            var factorInAge = Convert.ToBoolean(Helper.GetEnv("FACTOR_IN_AGE_OF_POST"));
+            var tagsToTweet = Helper.GetEnv("TAGS_TO_TWEET").Split(',');
+
+            while (true)
+            {
+                string randomPostId = "";
+                do
+                {
+                    randomPostId = factorInAge
+                        ? GetRandomPostIdWeightedOnAge(allPosts)
+                        : allPosts[rnd.Next(0, allPosts.Count)].Id;
+                }
+                while (selectedIds.Contains(randomPostId));
+
+                selectedIds.Add(randomPostId);
+
+                var randomPost = GetPost(randomPostId);
+
+                if (randomPost.Tags.Select(tag => tag.Slug).Intersect(tagsToTweet).Any())
+                    return randomPost;
+            }
         }
 
         static string GetRandomPostIdWeightedOnAge(List<Post> posts)
@@ -73,15 +91,12 @@ namespace TweetRandomFeedItem
 
         static Post GetPost(string postId)
         {
-            var ghostUri = Helper.GetEnv("GHOST_URI");
-          
-            var client = new RestClient { BaseUrl = new Uri($"{ghostUri}{API_URL}") };
-
             var request = new RestRequest($"posts/{postId}", Method.GET);
             AttachAuthToRequest(request);
 
             request.AddQueryParameter("include", "tags");
 
+            var client = new RestClient { BaseUrl = new Uri($"{Helper.GetEnv("GHOST_URI")}{API_URL}") };
             return client.Execute<PostResponse>(request).Data.Posts.Single();
         }
 
@@ -125,6 +140,8 @@ namespace TweetRandomFeedItem
             Auth.SetUserCredentials(consumerKey, consumerSecret, userAccessToken, userAccessTokenSecret);
 
             Tweet.PublishTweet(message);
+
+            Console.WriteLine($"Tweeted message:\r\n{message}\r\n");
         }
 
         static void AttachAuthToRequest(RestRequest request)
