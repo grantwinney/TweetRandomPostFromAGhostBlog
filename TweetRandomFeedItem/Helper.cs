@@ -1,19 +1,33 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace TweetRandomFeedItem
 {
     public class Helper
     {
-        public static string GetEnv(string environmentVariable)
+        static readonly Regex invalidChars = new Regex("[- ]");
+  
+        public static string SanitizeTagName(string tag)
         {
-            return Environment.GetEnvironmentVariable(environmentVariable);
+            return $"#{invalidChars.Replace(tag, "").Replace("#", "sharp").Replace(".", "dot")}";
         }
 
-        public static string GetEnv(string environmentVariable, string defaultValue)
+        public static T GetEnv<T>(string environmentVariable)
         {
-            var env = GetEnv(environmentVariable);
+            try
+            {
+                return (T)Convert.ChangeType(Environment.GetEnvironmentVariable(environmentVariable), typeof(T));
+            }
+            catch (ArgumentNullException)
+            {
+                Console.WriteLine($"The environment variable {environmentVariable} is required and missing.");
+                throw;
+            }
+        }
 
-            return !String.IsNullOrWhiteSpace(env) ? env : defaultValue;
+        public static T GetEnv<T>(string environmentVariable, string defaultValue)
+        {
+            return (T)Convert.ChangeType(Environment.GetEnvironmentVariable(environmentVariable) ?? defaultValue, typeof(T));
         }
     }
 }
