@@ -114,7 +114,7 @@ namespace TweetRandomFeedItem
                 tagsFlat += $" {t}";
             }
 
-            return $"{caption}{tagsFlat}\r\n{API_URL}{post.Url}";
+            return $"{caption}{tagsFlat}\r\n{post.Url}";
         }
 
         static async Task SendTweet(string message)
