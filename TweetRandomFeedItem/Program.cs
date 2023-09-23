@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using GhostSharp;
 using GhostSharp.Entities;
 using GhostSharp.Enums;
 using GhostSharp.QueryParams;
+using Newtonsoft.Json;
 using Tweetinvi;
+using Tweetinvi.Core.Web;
+using Tweetinvi.Models;
 
 namespace TweetRandomFeedItem
 {
@@ -35,8 +40,8 @@ namespace TweetRandomFeedItem
             var allPosts = api.GetPosts(new PostQueryParams
             {
                 Limit = POST_RETRIEVAL_LIMIT,
-                Fields = FACTOR_IN_AGE_OF_POST ? PostFields.Id | PostFields.PublishedAt : PostFields.Id
-            }).Posts;
+                Fields = (FACTOR_IN_AGE_OF_POST ? PostFields.Id | PostFields.PublishedAt : PostFields.Id) | PostFields.Status,
+            }).Posts.Where(p => p.Status == "published").ToList();
 
             if (!allPosts.Any())
             {
@@ -76,12 +81,10 @@ namespace TweetRandomFeedItem
             var earliestPublishDate = posts.Last().PublishedAt;
 
             var postsCount = posts.Count();
-            var postIdsAndPubWeights = posts.Select((p, i) => Tuple.Create(posts[i].Id, (posts[i].PublishedAt - earliestPublishDate).Value.Days * (postsCount - i)));
-
+            var postIdsAndPubWeights = posts.Select((p, i) => Tuple.Create(posts[i].Id, ((posts[i].PublishedAt ?? DateTime.MinValue) - earliestPublishDate).Value.Days * (postsCount - i)));
             var totalPubWeights = postIdsAndPubWeights.Sum(p => p.Item2);
-
             var randomPubWeight = rnd.Next(0, totalPubWeights);
-           
+
             foreach (var p in postIdsAndPubWeights)
             {
                 if (randomPubWeight <= p.Item2)
@@ -119,11 +122,43 @@ namespace TweetRandomFeedItem
 
         static async Task SendTweet(string message)
         {
-            var userClient = new TwitterClient(TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET, TWITTER_USER_ACCESS_TOKEN, TWITTER_USER_ACCESS_TOKEN_SECRET);
+            var client = new TwitterClient(TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET, TWITTER_USER_ACCESS_TOKEN, TWITTER_USER_ACCESS_TOKEN_SECRET);
 
-            await userClient.Tweets.PublishTweetAsync(message);
+            //await userClient.Tweets.PublishTweetAsync(message);
 
-            Console.WriteLine($"Tweeted message:\r\n{message}\r\n");
+            // The TweetInvi library seems to be abandoned and PublishTweetAsync isn't working correctly,
+            // but someone posted a workaround: https://github.com/linvi/tweetinvi/issues/1147#issuecomment-1173174302
+            var result = await client.Execute.AdvanceRequestAsync(
+                (ITwitterRequest request) =>
+                {
+                    var jsonBody = client.Json.Serialize(new TweetV2PostRequest { Text = message });
+
+                    var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                    request.Query.Url = "https://api.twitter.com/2/tweets";
+                    request.Query.HttpMethod = Tweetinvi.Models.HttpMethod.POST;
+                    request.Query.HttpContent = content;
+                }
+            );
+
+            if (result.Response.IsSuccessStatusCode)
+                Console.WriteLine($"Tweeted message:\r\n{message}\r\n");
+            else
+                Console.WriteLine($"Error posting tweet: {result.Content}\r\n\r\nOriginal tweet: {message}");
         }
+    }
+
+    /// <summary>
+    /// There are a lot more fields according to:
+    /// https://developer.twitter.com/en/docs/twitter-api/tweets/manage-tweets/api-reference/post-tweets
+    /// but these are the ones we care about for our use case.
+    /// </summary>
+    public class TweetV2PostRequest
+    {
+        /// <summary>
+        /// The text of the tweet to post.
+        /// </summary>
+        [JsonProperty("text")]
+        public string Text { get; set; } = string.Empty;
     }
 }

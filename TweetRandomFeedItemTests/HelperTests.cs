@@ -31,5 +31,14 @@ namespace TweetRandomFeedItemTests
         {
             Assert.AreEqual($"#{tagName}", Helper.SanitizeTagName(tagName));
         }
+
+        [Test]
+        [TestCase(null, "9999999", 9999999)]
+        [TestCase("", "9999999", 9999999)]
+        [TestCase("3", "9999999", 3)]
+        public void ConvertVariableType_ConvertsStringsToNumbers(string variableValue, string defaultValue, int expectedResult)
+        {
+            Assert.AreEqual(expectedResult, Helper.ConvertVariableType<int>("n/a", variableValue, defaultValue));
+        }
     }
 }
